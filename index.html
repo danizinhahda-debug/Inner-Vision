@@ -72,11 +72,12 @@
         <button class="btn btn-purple" onclick="location.reload()" style="background: #2d2d39;">NOVA ANÁLISE</button>
     </div>
 </div>
-
 <script>
     async function analyze() {
-        const file = document.getElementById('fileInput').files[0];
-        if(!file) return alert("Selecione uma imagem!");
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        
+        if(!file) return alert("Por favor, selecione uma imagem primeiro!");
 
         document.getElementById('screen-upload').classList.remove('active');
         document.getElementById('loading').style.display = 'block';
@@ -85,29 +86,40 @@
         formData.append('file', file);
 
         try {
-            const response = await fetch('https://inner-backend.onrender.com/analisar', {
+            // VERIFIQUE SE ESTE LINK É EXATAMENTE O SEU DO RENDER
+            const response = await fetch('[https://inner-backend.onrender.com/analisar', {
                 method: 'POST',
                 body: formData
             });
+
+            if (!response.ok) throw new Error('Falha no servidor');
+
             const textData = await response.text();
-            // Limpa o JSON caso venha com caracteres de markdown
-            const cleanJson = textData.replace(/```json|```/g, "");
+            
+            // Isso remove sujeiras que a IA pode enviar no texto
+            const cleanJson = textData.replace(/```json|```/g, "").trim();
             const data = JSON.parse(cleanJson);
 
-            document.getElementById('res-par').innerText = data.par || "ATIVO IDENTIFICADO";
-            document.getElementById('res-sinal').innerText = data.sinal;
-            document.getElementById('res-conf').innerText = data.confianca + '%';
-            document.getElementById('conf-bar').style.width = data.confianca + '%';
-            document.getElementById('res-tend').innerText = data.tendencia;
+            // Preenche os dados na tela
+            document.getElementById('res-par').innerText = data.par || "ATIVO";
+            document.getElementById('res-sinal').innerText = data.sinal || "AGUARDAR";
+            document.getElementById('res-conf').innerText = (data.confianca || 0) + '%';
+            document.getElementById('conf-bar').style.width = (data.confianca || 0) + '%';
+            document.getElementById('res-tend').innerText = data.tendencia || "NEUTRA";
 
-            if(data.sinal.includes("COMPRA")) {
+            // Muda cor se for COMPRA
+            if(data.sinal && data.sinal.toUpperCase().includes("COMPRA")) {
                 document.getElementById('res-sinal').style.backgroundColor = "#22c55e";
+            } else {
+                document.getElementById('res-sinal').style.backgroundColor = "#ef4444";
             }
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('screen-result').classList.add('active');
+
         } catch (e) {
-            alert("Erro na conexão! Verifique se o Render ainda está acordado.");
+            console.error(e);
+            alert("Erro na conexão! O servidor pode estar iniciando. Aguarde 30 segundos e tente de novo.");
             location.reload();
         }
     }
