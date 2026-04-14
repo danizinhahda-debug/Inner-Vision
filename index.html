@@ -1,132 +1,103 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oráculo Vision</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>INNER VISION</title>
     <style>
-        :root { --bg: #050505; --card: #121217; --primary: #a855f7; --red: #ef4444; --text: #ffffff; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
-        body { background-color: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; padding: 15px; }
-        .app { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 20px; }
-        header { text-align: center; padding: 20px 0; font-weight: bold; letter-spacing: 2px; border-bottom: 1px solid #1f2937; }
-        .screen { display: none; flex-direction: column; gap: 15px; }
-        .active { display: flex; }
-        .upload-box { border: 2px dashed #2d2d39; border-radius: 20px; padding: 40px 20px; text-align: center; background: #0a0a0c; }
-        .btn { padding: 16px; border-radius: 14px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 16px; width: 100%; }
-        .btn-purple { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3); }
-        .btn-red { background: var(--red); color: white; font-size: 20px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
-        .card { background: var(--card); padding: 20px; border-radius: 18px; border: 1px solid #1f2937; }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .stat-item { background: var(--card); padding: 15px; border-radius: 14px; text-align: center; border: 1px solid #1f2937; }
-        .stat-item span { color: #9ca3af; font-size: 12px; display: block; margin-bottom: 5px; }
-        #loading { text-align: center; padding: 40px; color: var(--primary); font-weight: bold; }
-        input[type="file"] { margin: 15px 0; font-size: 12px; color: #9ca3af; }
-    </style>
-</head>
-<body>
-
-<div class="app">
-    <header>ORÁCULO VISION</header>
-
-    <div id="screen-upload" class="screen active">
-        <div class="upload-box">
-            <div style="font-size: 40px; margin-bottom: 10px;">📸</div>
-            <h3>Enviar Gráfico</h3>
-            <p style="color: #9ca3af; font-size: 14px; margin-top: 8px;">Selecione o print do gráfico</p>
-            <input type="file" id="fileInput" accept="image/*">
-        </div>
-        <button class="btn btn-purple" onclick="analyze()">🤖 ANALISAR AGORA</button>
-    </div>
-
-    <div id="loading" style="display: none;">
-        <p>PROCESSANDO PADRÕES... ⚡</p>
-    </div>
-
-    <div id="screen-result" class="screen">
-        <div class="card">
-            <p style="color: #9ca3af; font-size: 12px;">Sinal Gerado pela IA</p>
-            <h2 id="res-par">EUR/USD</h2>
-            <div style="margin-top: 15px; color: #d8b4fe; font-weight: bold; font-size: 22px;">• ENTRE AGORA</div>
-        </div>
-
-        <button id="res-sinal" class="btn btn-red">VENDA</button>
-
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span>Confiança</span>
-                <strong id="res-conf">0%</strong>
-            </div>
-            <div style="background: #2d2d39; height: 8px; border-radius: 10px; overflow: hidden;">
-                <div id="conf-bar" style="background: #3b82f6; height: 100%; width: 0%;"></div>
-            </div>
-        </div>
-
-        <div class="stat-grid">
-            <div class="stat-item"><span>Tendência</span><h3 id="res-tend">--</h3></div>
-            <div class="stat-item"><span>Time Frame</span><h3>M1</h3></div>
-            <div class="stat-item"><span>Precisão</span><h3>MÉDIA</h3></div>
-            <div class="stat-item"><span>Volume</span><h3>ALTO</h3></div>
-        </div>
-
-        <button class="btn btn-purple" onclick="location.reload()" style="background: #2d2d39;">NOVA ANÁLISE</button>
-    </div>
-</div>
-<script>
-    async function analyze() {
-        const fileInput = document.getElementById('fileInput');
-        const file = fileInput.files[0];
-        
-        if(!file) return alert("Selecione uma imagem do gráfico primeiro!");
-
-        document.getElementById('screen-upload').classList.remove('active');
-        document.getElementById('loading').style.display = 'block';
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            // Tenta conectar ao servidor por até 60 segundos
-            const response = await fetch('https://inner-backend.onrender.com/analisar', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) throw new Error();
-
-            const textData = await response.text();
-            // Limpa o texto caso a IA envie marcas de código (```json)
-            const cleanJson = textData.replace(/```json|```/g, "").trim();
-            const data = JSON.parse(cleanJson);
-
-            // Preenche os cards com os resultados da IA
-            document.getElementById('res-par').innerText = data.par || "ATIVO";
-            document.getElementById('res-sinal').innerText = data.sinal || "AGUARDAR";
-            document.getElementById('res-conf').innerText = (data.confianca || 0) + '%';
-            document.getElementById('conf-bar').style.width = (data.confianca || 0) + '%';
-            document.getElementById('res-tend').innerText = data.tendencia || "NEUTRA";
-
-            // Troca a cor do botão baseado no sinal
-            const btnSinal = document.getElementById('res-sinal');
-            if(data.sinal.toUpperCase().includes("COMPRA")) {
-                btnSinal.innerText = "COMPRA";
-                btnSinal.style.backgroundColor = "#22c55e"; // Verde
-            } else {
-                btnSinal.innerText = "VENDA";
-                btnSinal.style.backgroundColor = "#ef4444"; // Vermelho
-            }
-
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('screen-result').classList.add('active');
-
-        } catch (e) {
-            alert("O servidor está acordando! Aguarde 30 segundos e clique em ANALISAR novamente.");
-            // Não recarrega a página para o usuário não perder a foto selecionada
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('screen-upload').classList.add('active');
+        :root {
+            --primary: #8a2be2;
+            --bg: #0a0a0a;
+            --card: #161616;
+            --text: #ffffff;
         }
-    }
-</script>
 
-</body>
-</html>
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            background: var(--card);
+            border-radius: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            border: 1px solid #222;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            letter-spacing: 5px;
+            margin-bottom: 30px;
+            color: var(--text);
+            font-weight: 300;
+            border-bottom: 1px solid #333;
+            padding-bottom: 15px;
+        }
+
+        #preview-container {
+            width: 100%;
+            height: 220px;
+            border: 2px dashed #333;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #preview-img {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+            border-radius: 10px;
+        }
+
+        .btn-upload {
+            background: var(--primary);
+            color: white;
+            padding: 18px 30px;
+            border-radius: 15px;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn-upload:active { transform: scale(0.97); opacity: 0.8; }
+
+        #status {
+            margin: 20px 0;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--primary);
+            min-height: 24px;
+        }
+
+        #resultado {
+            margin-top: 10px;
+            padding: 20px;
+            background: #000;
+            border-radius: 15px;
+            display: none;
+            text-align: left;
+            border: 1px solid #222;
+        }
+
+        .signal-box { margin-bottom: 12px; border-bottom: 1px solid #111; padding
