@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oráculo Vision</title>
+    <style>
+        :root { --bg: #0d0e15; --card: #1a1b26; --accent: #9d4edd; --text: #fff; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; justify-content: center; margin: 0; }
+        .app { width: 100%; max-width: 400px; padding: 20px; display: flex; flex-direction: column; min-height: 100vh; }
+        .screen { display: none; flex-direction: column; gap: 20px; }
+        .active { display: flex; }
+        .btn { padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+        .btn-purple { background: var(--accent); color: white; }
+        .btn-sell { background: #ef233c; color: white; font-size: 20px; }
+        .upload-area { border: 2px dashed #3a3b50; border-radius: 20px; padding: 40px 20px; text-align: center; background: rgba(26,27,38,0.5); }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-card { background: var(--card); padding: 10px; border-radius: 10px; text-align: center; }
+        #loading { text-align: center; padding: 50px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div id="screen-upload" class="screen active">
+            <h2 style="text-align:center">ORÁCULO VISION</h2>
+            <div class="upload-area">
+                <p>Envie o gráfico para análise</p>
+                <input type="file" id="fileInput" accept="image/*" style="margin: 20px 0;">
+                <button class="btn btn-purple" onclick="analyze()">🤖 ANALISAR AGORA</button>
+            </div>
+        </div>
+
+        <div id="loading">Gerando sinal com IA... ⏳</div>
+
+        <div id="screen-result" class="screen">
+            <div style="background: var(--card); padding: 15px; border-radius: 12px; text-align:center;">
+                <h3 id="res-par">EUR/USD</h3>
+                <h1 style="color: #e0aaff;">• ENTRE AGORA</h1>
+            </div>
+            <button id="res-sinal" class="btn btn-sell">VENDA</button>
+            <div class="stat-grid">
+                <div class="stat-card"><small>Confiança</small><h3 id="res-conf">--</h3></div>
+                <div class="stat-card"><small>Tendência</small><h3 id="res-tend">--</h3></div>
+            </div>
+            <button class="btn btn-purple" onclick="location.reload()">NOVA ANÁLISE</button>
+        </div>
+    </div>
+
+    <script>
+        async function analyze() {
+            const file = document.getElementById('fileInput').files[0];
+            if(!file) return alert("Selecione uma foto!");
+
+            document.getElementById('screen-upload').classList.remove('active');
+            document.getElementById('loading').style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // ATENÇÃO: Substitua pela URL do seu servidor após hospedar o Back-end
+                const response = await fetch('https://SEU-BACKEND.render.com/analisar', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                document.getElementById('res-par').innerText = data.par;
+                document.getElementById('res-sinal').innerText = data.sinal;
+                document.getElementById('res-conf').innerText = data.confianca + '%';
+                document.getElementById('res-tend').innerText = data.tendencia;
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('screen-result').classList.add('active');
+            } catch (e) {
+                alert("Erro na análise. Verifique o servidor.");
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
