@@ -8,7 +8,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configure sua chave aqui
-genai.configure(api_key="COLOQUE_SUA_CHAVE_AQUI")
+genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 @app.route('/analisar', methods=['POST'])
